@@ -176,7 +176,7 @@ class ChartBuilder(object):
 
             if not any(
                     root.startswith(os.path.join(self.source_directory, x))
-                    for x in ['templates', 'charts']):
+                    for x in ['templates', 'charts', '.git']):
                 for file in files:
                     if (file not in files_to_ignore and
                             file not in non_template_files):
