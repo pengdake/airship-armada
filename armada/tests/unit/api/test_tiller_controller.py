@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import mock
+import json
 
 from oslo_config import cfg
 
@@ -166,6 +167,41 @@ class TillerControllerTest(base.BaseControllerTest):
         m_tiller.list_releases.assert_called_once_with()
         m_tiller.__exit__.assert_called()
 
+    @mock.patch.object(api, 'Tiller')
+    def test_delete_tiller_release(self, mock_tiller):
+        """Tests DELETE /api/v1.0/releases/{release} endpoint.
+        """
+        rules = {'tiller:delete_release': '@'}
+        self.policy.set_rules(rules)
+
+        m_tiller = mock_tiller.return_value
+        m_tiller.__enter__.return_value = m_tiller
+
+        tiller_host = 'host'
+        tiller_port = '44134'
+        tiller_namespace = 'tn'
+        release = 'test-release'
+
+        resp = self.app.simulate_delete(
+            '/api/v1.0/releases/{}'.format(release),
+            params={
+                'tiller_host': tiller_host,
+                'tiller_port': tiller_port,
+                'tiller_namespace': tiller_namespace,
+                'dry_run': False
+            })
+
+        mock_tiller.assert_called_once_with(
+            tiller_host=tiller_host,
+            tiller_port=44134,
+            tiller_namespace=tiller_namespace,
+            dry_run=False)
+
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual('Delete test-release complete.',
+                         json.loads(resp.text)['message'])
+        m_tiller.__exit__.assert_called()
+
 
 class TillerControllerNegativeRbacTest(base.BaseControllerTest):
 
@@ -187,4 +223,14 @@ class TillerControllerNegativeRbacTest(base.BaseControllerTest):
         rules = {'tiller:get_status': policy_base.RULE_ADMIN_REQUIRED}
         self.policy.set_rules(rules)
         resp = self.app.simulate_get('/api/v1.0/status')
+        self.assertEqual(403, resp.status_code)
+
+    @test_utils.attr(type=['negative'])
+    def test_delete_tiller_status_insufficient_permissions(self):
+        """Tests the DELETE /api/v1.0/release/{release} endpoint returns
+        403 following failed authorization.
+        """
+        rules = {'tiller:delete_release': policy_base.RULE_ADMIN_REQUIRED}
+        self.policy.set_rules(rules)
+        resp = self.app.simulate_delete('/api/v1.0/releases/fake-release')
         self.assertEqual(403, resp.status_code)

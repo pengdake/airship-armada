@@ -64,6 +64,7 @@ def create(enable_middleware=CONF.middleware):
         ('apply', Apply()),
         ('releases', Release()),
         ('rollback/{release}', Rollback()),
+        ('releases/{release}', Release()),
         ('status', Status()),
         ('tests', TestReleasesManifestController()),
         ('test/{release}', TestReleasesReleaseNameController()),

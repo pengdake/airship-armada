@@ -84,3 +84,22 @@ class Release(api.BaseResource):
             err_message = 'Unable to find Tiller Releases: {}'.format(e)
             self.error(req.context, err_message)
             self.return_error(resp, falcon.HTTP_500, message=err_message)
+
+    @policy.enforce('tiller:delete_release')
+    def on_delete(self, req, resp, release):
+        '''Controller for deleting Tiller release.
+        '''
+        purge = not req.get_param_as_bool('no_purge')
+        try:
+            with self.get_tiller(req, resp) as tiller:
+                tiller.uninstall_release(release, purge)
+                resp.body = json.dumps({
+                    'message':
+                    'Delete {} complete.'.format(release)
+                })
+                resp.content_type = 'application/json'
+                resp.status = falcon.HTTP_200
+        except Exception as e:
+            err_message = 'Unable to delete Tiller Release: {}'.format(e)
+            self.error(req.context, err_message)
+            self.return_error(resp, falcon.HTTP_500, message=err_message)

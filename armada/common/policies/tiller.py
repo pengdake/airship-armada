@@ -31,6 +31,14 @@ tiller_policies = [
             'path': '/api/v1.0/releases/',
             'method': 'GET'
         }]),
+    policy.DocumentedRuleDefault(
+        name=base.TILLER % 'delete_release',
+        check_str=base.RULE_ADMIN_VIEWER,
+        description='Delete tiller release',
+        operations=[{
+            'path': '/api/v1.0/releases/{release}',
+            'method': 'DELETE'
+        }]),
 ]
 
 
